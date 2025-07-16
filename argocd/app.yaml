@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wil-playground
+  namespace: argocd
+spec:
+  destination:
+    namespace: dev
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://github.com/fprevot/inception-of-things-fprevot.git
+    targetRevision: HEAD
+    path: apps/playground
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
