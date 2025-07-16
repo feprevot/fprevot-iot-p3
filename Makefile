@@ -21,3 +21,7 @@ argo-sync:
 
 app-sync:
 	kubectl apply -f argocd/app.yaml
+
+argo-password:
+	@echo "Argo CD admin password:"
+	kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d && echo
