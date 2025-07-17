@@ -38,12 +38,22 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 
 echo "==> Waiting for ArgoCD pods to be ready..."
 while [[ $(kubectl get pods -n argocd --no-headers | grep -v 'Running\|Completed') ]]; do
-  echo "⏳ Waiting for ArgoCD pods to be ready..."
+  echo " Waiting for ArgoCD pods to be ready..."
   sleep 5
 done
 
 echo "==> Exposing ArgoCD on port 8888..."
 kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
 
+echo "==> Deploying ArgoCD application..."
+kubectl apply -f argocd/app.yaml
+
+echo "==> Waiting for app pods to be ready..."
+while [[ $(kubectl get pods -n dev --no-headers | grep -v 'Running\|Completed') ]]; do
+  echo " Waiting for app pods to be ready..."
+  sleep 5
+done
+
+
 echo "==> Done."
-echo "➡️  Reconnect to your terminal to activate Docker permissions."
+echo " Reconnect to your terminal to activate Docker permissions."
