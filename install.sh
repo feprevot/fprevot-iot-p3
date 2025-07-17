@@ -6,10 +6,6 @@ echo "==> Installing dependencies..."
 sudo apt update
 sudo apt install -y curl gnupg lsb-release ca-certificates apt-transport-https software-properties-common
 
-# echo "==> Installing Docker..."
-# curl -fsSL https://get.docker.com | sudo sh
-# sudo usermod -aG docker $USER
-
 echo "==> Installing kubectl..."
 KUBECTL_VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
 curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
@@ -36,14 +32,21 @@ kubectl create namespace dev || true
 echo "==> Installing ArgoCD..."
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
+echo "==> Exposing ArgoCD via LoadBalancer..."
+kubectl apply -f argocd-server-lb.yaml
+
+echo "==> Waiting for ArgoCD LoadBalancer to be provisioned..."
+while [[ -z $(kubectl get svc argocd-server-lb -n argocd -o jsonpath='{.status.loadBalancer.ingress}') ]]; do
+  echo " Waiting for LoadBalancer IP..."
+  sleep 2
+done
+
+
 echo "==> Waiting for ArgoCD pods to be ready..."
 while [[ $(kubectl get pods -n argocd --no-headers | grep -v 'Running\|Completed') ]]; do
   echo " Waiting for ArgoCD pods to be ready..."
   sleep 5
 done
-
-echo "==> Exposing ArgoCD on port 8888..."
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
 
 echo "==> Deploying ArgoCD application..."
 kubectl apply -f argocd/app.yaml
@@ -54,6 +57,6 @@ while [[ $(kubectl get pods -n dev --no-headers | grep -v 'Running\|Completed') 
   sleep 5
 done
 
-
-echo "==> Done."
-echo " Reconnect to your terminal to activate Docker permissions."
+echo "==>  Done. You can now access ArgoCD at: http://localhost:8888"
+echo "==> ℹ To get ArgoCD admin password:"
+echo "kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath='{.data.password}' | base64 -d && echo"
